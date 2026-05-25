@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { z } from 'zod';
-import http from 'http';
+import express from 'express';
 import dotenv from 'dotenv';
 import {
   getUserInfo,
@@ -14,6 +14,7 @@ import {
 dotenv.config();
 
 const PORT = process.env.PORT || 3001;
+const app = express();
 
 // MCP 서버 생성
 const server = new McpServer({
@@ -89,38 +90,37 @@ server.tool(
   }
 );
 
-// HTTP 서버 시작
-const httpServer = http.createServer(async (req, res) => {
-  // CORS 헤더
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+// SSE transport 관리
+const transports = {};
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
-    return;
-  }
-
-  if (req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'UP', server: 'speccheck-mcp-server' }));
-    return;
-  }
-
-  if (req.url === '/mcp' || req.url === '/sse') {
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-    await server.connect(transport);
-    await transport.handleRequest(req, res);
-    return;
-  }
-
-  res.writeHead(404);
-  res.end('Not Found');
+// SSE 엔드포인트
+app.get('/sse', async (req, res) => {
+  console.log('[MCP] SSE 연결 요청');
+  const transport = new SSEServerTransport('/messages', res);
+  transports[transport.sessionId] = transport;
+  res.on('close', () => {
+    delete transports[transport.sessionId];
+  });
+  await server.connect(transport);
 });
 
-httpServer.listen(PORT, () => {
+// 메시지 엔드포인트
+app.post('/messages', express.json(), async (req, res) => {
+  const sessionId = req.query.sessionId;
+  const transport = transports[sessionId];
+  if (transport) {
+    await transport.handlePostMessage(req, res);
+  } else {
+    res.status(400).json({ error: 'Session not found' });
+  }
+});
+
+// 헬스체크
+app.get('/health', (req, res) => {
+  res.json({ status: 'UP', server: 'speccheck-mcp-server' });
+});
+
+app.listen(PORT, () => {
   console.log(`SpecCheck MCP 서버 실행 중 - http://localhost:${PORT}`);
-  console.log(`헬스체크: http://localhost:${PORT}/health`);
-  console.log(`MCP 엔드포인트: http://localhost:${PORT}/mcp`);
+  console.log(`SSE 엔드포인트: http://localhost:${PORT}/sse`);
 });
