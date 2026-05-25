@@ -111,9 +111,10 @@ app.get('/sse', async (req, res) => {
 });
 
 // 메시지 엔드포인트
-app.post('/messages', express.json(), async (req, res) => {
+app.post('/messages', async (req, res) => {
   const sessionId = req.query.sessionId;
   const transport = transports[sessionId];
+
   if (transport) {
     await transport.handlePostMessage(req, res);
   } else {
