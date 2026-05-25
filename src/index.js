@@ -96,12 +96,18 @@ const transports = {};
 // SSE 엔드포인트
 app.get('/sse', async (req, res) => {
   console.log('[MCP] SSE 연결 요청');
+
   const transport = new SSEServerTransport('/messages', res);
+
+  await server.connect(transport);
+
+  console.log('[MCP] sessionId:', transport.sessionId);
   transports[transport.sessionId] = transport;
+
   res.on('close', () => {
+    console.log('[MCP] SSE 연결 종료:', transport.sessionId);
     delete transports[transport.sessionId];
   });
-  await server.connect(transport);
 });
 
 // 메시지 엔드포인트
