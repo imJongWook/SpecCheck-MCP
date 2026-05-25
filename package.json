@@ -1,0 +1,17 @@
+{
+  "name": "speccheck-mcp-server",
+  "version": "1.0.0",
+  "description": "SpecCheck MCP Server - AI 스펙 진단 도구 서버",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "pg": "^8.11.0",
+    "dotenv": "^16.0.0",
+    "zod": "^3.22.0"
+  }
+}

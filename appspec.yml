@@ -1,0 +1,23 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/speccheck-mcp-server
+    overwrite: yes
+permissions:
+  - object: /home/ubuntu/speccheck-mcp-server
+    owner: ubuntu
+    group: ubuntu
+hooks:
+  AfterInstall:
+    - location: scripts/stop.sh
+      timeout: 60
+      runas: ubuntu
+  ApplicationStart:
+    - location: scripts/start.sh
+      timeout: 120
+      runas: ubuntu
+  ValidateService:
+    - location: scripts/validate.sh
+      timeout: 60
+      runas: ubuntu

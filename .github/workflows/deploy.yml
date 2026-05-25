@@ -1,0 +1,35 @@
+name: Deploy MCP Server to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
+
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: S3에 업로드
+        run: |
+          aws deploy push \
+            --application-name speccheck-mcp-server \
+            --s3-location s3://speccheck-codedeploy-bucket/speccheck-mcp-server.zip \
+            --source .
+
+      - name: CodeDeploy 배포 실행
+        run: |
+          aws deploy create-deployment \
+            --application-name speccheck-mcp-server \
+            --deployment-group-name speccheck-mcp-server-group \
+            --s3-location bucket=speccheck-codedeploy-bucket,key=speccheck-mcp-server.zip,bundleType=zip
