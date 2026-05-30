@@ -4,7 +4,7 @@ cd /home/ubuntu/speccheck-mcp-server
 
 # .env 파일 생성
 cat > .env << ENVEOF
-DATABASE_URL=postgresql://postgres.hapjrztcjdqwasyzitvx:CPZOryDqbyzfHj6C@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?sslmode=require
+DATABASE_URL=postgresql://postgres.hapjrztcjdqwasyzitvx:CPZOryDqbyzfHj6C@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?sslmode=no-verify
 PORT=3001
 ENVEOF
 
